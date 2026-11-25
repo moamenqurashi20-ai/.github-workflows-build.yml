@@ -8,41 +8,153 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
+
+      - name: Setup Android SDK & NDK
+        run: |
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-36" "build-tools;35.0.0" "ndk;27.0.12077973"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.27.1'
           channel: 'stable'
           cache: true
 
-      - name: Initialize Flutter Project & Merge Files
+      - name: Create Flutter Project & Add Packages
         run: |
-          flutter create --org com.tareeq.aljannah --project-name tareeq_aljannah temp_project
-          rm -rf temp_project/test
-          cp -f pubspec.yaml temp_project/pubspec.yaml
-          cp -f lib/main.dart temp_project/lib/main.dart
-          cd temp_project
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>' android/app/src/main/AndroidManifest.xml
-          echo "flutter.compileSdkVersion=34" >> android/local.properties
-          echo "flutter.targetSdkVersion=34" >> android/local.properties
-          echo "flutter.minSdkVersion=21" >> android/local.properties
-          flutter pub get
+          flutter create --org com.tareeq.aljannah --project-name tareeq_aljannah app_project
+          rm -rf app_project/test
+          cd app_project
+
+          python3 - << 'PYEOF'
+          with open("pubspec.yaml", "r") as f:
+              content = f.read()
+          target = "  flutter:\n    sdk: flutter"
+          replacement = "  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter"
+          content = content.replace(target, replacement, 1)
+          with open("pubspec.yaml", "w") as f:
+              f.write(content)
+          PYEOF
+
+          flutter pub add adhan geolocator intl google_fonts http
+          cp -f "$GITHUB_WORKSPACE/lib/main.dart" lib/main.dart
+
+      - name: Configure AndroidManifest & Clean Gradle
+        run: |
+          cd "$GITHUB_WORKSPACE/app_project"
+
+          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+              <application
+                  android:label="طريق الجنة"
+                  android:name="${applicationName}"
+                  android:icon="@mipmap/ic_launcher"
+                  android:usesCleartextTraffic="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:theme="@style/LaunchTheme"
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+                      android:hardwareAccelerated="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <meta-data
+                        android:name="io.flutter.embedding.android.NormalTheme"
+                        android:resource="@style/NormalTheme"
+                        />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+                  <meta-data
+                      android:name="flutterEmbedding"
+                      android:value="2" />
+              </application>
+          </manifest>
+          EOF
+
+          for f in android/settings.gradle android/settings.gradle.kts; do
+            if [ -f "$f" ]; then
+              sed -i 's/id "com.android.application" version ".*"/id "com.android.application" version "8.9.1"/g' "$f"
+              sed -i 's/id("com.android.application") version ".*"/id("com.android.application") version "8.9.1"/g' "$f"
+              sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.1.0"/g' "$f"
+              sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.1.0"/g' "$f"
+            fi
+          done
+
+          sed -i 's/gradle-.*-all.zip/gradle-8.11.1-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties
+
+          rm -f android/app/build.gradle.kts
+          cat << 'EOF' > android/app/build.gradle
+          plugins {
+              id "com.android.application"
+              id "kotlin-android"
+              id "dev.flutter.flutter-gradle-plugin"
+          }
+
+          android {
+              namespace "com.tareeq.aljannah.tareeq_aljannah"
+              compileSdk 36
+              ndkVersion "27.0.12077973"
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+
+              sourceSets {
+                  main.java.srcDirs += 'src/main/kotlin'
+              }
+
+              defaultConfig {
+                  applicationId "com.tareeq.aljannah.tareeq_aljannah"
+                  minSdkVersion 24
+                  targetSdkVersion 36
+                  versionCode 1
+                  versionName "1.0.0"
+                  multiDexEnabled true
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.debug
+                  }
+              }
+          }
+
+          flutter {
+              source '../..'
+          }
+          EOF
+
+      - name: Build Release APK
+        run: |
+          cd "$GITHUB_WORKSPACE/app_project"
           flutter build apk --release
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: tareeq-aljannah-v1
-          path: temp_project/build/app/outputs/flutter-apk/app-release.apk
+          path: app_project/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 2
