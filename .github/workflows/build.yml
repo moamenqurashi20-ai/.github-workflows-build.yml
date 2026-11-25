@@ -2,20 +2,21 @@ name: Build Tareeq AlJannah APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
       - name: Setup Android SDK & NDK
@@ -24,30 +25,20 @@ jobs:
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-36" "build-tools;35.0.0" "ndk;27.0.12077973"
 
-      - name: Setup Flutter
+      - name: Setup Flutter 3.27.1
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.27.1'
           channel: 'stable'
-          cache: true
 
-      - name: Create Flutter Project & Add Packages
+      - name: Create Flutter Project & Sync Files
         run: |
           flutter create --org com.tareeq.aljannah --project-name tareeq_aljannah app_project
           rm -rf app_project/test
+          cp -f "$GITHUB_WORKSPACE/pubspec.yaml" app_project/pubspec.yaml
+          cp -rf "$GITHUB_WORKSPACE/lib/"* app_project/lib/
           cd app_project
-
-          python3 - << 'PYEOF'
-          with open("pubspec.yaml", "r") as f:
-              content = f.read()
-          target = "  flutter:\n    sdk: flutter"
-          replacement = "  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter"
-          content = content.replace(target, replacement, 1)
-          with open("pubspec.yaml", "w") as f:
-              f.write(content)
-          PYEOF
-
-          flutter pub add adhan geolocator intl google_fonts http
-          cp -f "$GITHUB_WORKSPACE/lib/main.dart" lib/main.dart
+          flutter pub get
 
       - name: Configure AndroidManifest & Gradle
         run: |
@@ -63,7 +54,8 @@ jobs:
                   android:label="طريق الجنة"
                   android:name="${applicationName}"
                   android:icon="@mipmap/ic_launcher"
-                  android:usesCleartextTraffic="true">
+                  android:usesCleartextTraffic="true"
+                  android:hardwareAccelerated="true">
                   <activity
                       android:name=".MainActivity"
                       android:exported="true"
@@ -88,42 +80,16 @@ jobs:
           </manifest>
           EOF
 
-          cat << 'EOF' > android/gradle/wrapper/gradle-wrapper.properties
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.11.1-all.zip
-          EOF
+          for f in android/settings.gradle android/settings.gradle.kts; do
+            if [ -f "$f" ]; then
+              sed -i 's/id "com.android.application" version ".*"/id "com.android.application" version "8.9.1"/g' "$f"
+              sed -i 's/id("com.android.application") version ".*"/id("com.android.application") version "8.9.1"/g' "$f"
+              sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.1.0"/g' "$f"
+              sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.1.0"/g' "$f"
+            fi
+          done
 
-          rm -f android/settings.gradle
-          cat << 'EOF' > android/settings.gradle.kts
-          pluginManagement {
-              val flutterSdkPath = run {
-                  val properties = java.util.Properties()
-                  file("local.properties").inputStream().use { properties.load(it) }
-                  val flutterSdkPath = properties.getProperty("flutter.sdk")
-                  require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
-                  flutterSdkPath
-              }
-
-              includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
-
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-
-          plugins {
-              id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-              id("com.android.application") version "8.9.1" apply false
-              id("org.jetbrains.kotlin.android") version "2.1.0" apply false
-          }
-
-          include(":app")
-          EOF
+          sed -i 's/gradle-.*-all.zip/gradle-8.11.1-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties
 
           rm -f android/app/build.gradle.kts
           cat << 'EOF' > android/app/build.gradle
@@ -163,6 +129,8 @@ jobs:
               buildTypes {
                   release {
                       signingConfig signingConfigs.debug
+                      minifyEnabled false
+                      shrinkResources false
                   }
               }
           }
@@ -175,7 +143,7 @@ jobs:
       - name: Build Release APK
         run: |
           cd "$GITHUB_WORKSPACE/app_project"
-          flutter build apk --release --android-skip-build-dependency-validation
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
