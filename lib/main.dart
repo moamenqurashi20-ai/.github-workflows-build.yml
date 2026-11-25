@@ -183,10 +183,10 @@ class HomeDashboardScreen extends StatelessWidget {
     final List> gridItems = [
       {'title': 'السبحة الإلكترونية', 'sub': '', 'icon': Icons.radio_button_checked, 'color': const Color(0xFF2F80ED), 'page': const TasbihScreen()},
       {'title': 'أسئلة دينية', 'sub': 'اختبر معلوماتك', 'icon': Icons.psychology, 'color': const Color(0xFFEB5757), 'page': const QuizScreen()},
-      {'title': 'أوقات الصلاة', 'sub': 'حساب فلكي دقيق', 'icon': Icons.access_time_filled, 'color': const Color(0xFF27AE60), 'page': const Scaffold(body: SafeArea(child: PrayerTimesScreen()))},
-      {'title': 'القرآن الكريم', 'sub': 'نص معتمد وتفسير', 'icon': Icons.menu_book, 'color': const Color(0xFF9B51E0), 'page': const Scaffold(body: SafeArea(child: QuranSurahsScreen()))},
-      {'title': 'أذكار المسلم', 'sub': 'الصباح والمساء', 'icon': Icons.auto_stories, 'color': const Color(0xFF219653), 'page': const Scaffold(body: SafeArea(child: AzkarScreen()))},
-      {'title': 'أدعية مختارة', 'sub': 'من الكتاب والسنة', 'icon': Icons.volunteer_activism, 'color': const Color(0xFFF2994A), 'page': const Scaffold(body: SafeArea(child: AzkarScreen()))},
+      {'title': 'أوقات الصلاة', 'sub': 'حساب فلكي دقيق', 'icon': Icons.access_time_filled, 'color': const Color(0xFF27AE60), 'page': Scaffold(appBar: AppBar(title: const Text('أوقات الصلاة')), body: const PrayerTimesScreen())},
+      {'title': 'القرآن الكريم', 'sub': 'نص معتمد وتفسير', 'icon': Icons.menu_book, 'color': const Color(0xFF9B51E0), 'page': Scaffold(appBar: AppBar(title: const Text('القرآن الكريم')), body: const QuranSurahsScreen())},
+      {'title': 'أذكار المسلم', 'sub': 'الصباح والمساء', 'icon': Icons.auto_stories, 'color': const Color(0xFF219653), 'page': Scaffold(appBar: AppBar(title: const Text('أذكار المسلم')), body: const AzkarScreen())},
+      {'title': 'أدعية مختارة', 'sub': 'من الكتاب والسنة', 'icon': Icons.volunteer_activism, 'color': const Color(0xFFF2994A), 'page': Scaffold(appBar: AppBar(title: const Text('أدعية مختارة')), body: const AzkarScreen())},
     ];
 
     return Padding(
@@ -205,7 +205,7 @@ class HomeDashboardScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = gridItems[index];
                 return InkWell(
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => item['page'])),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => item['page'] as Widget)),
                   borderRadius: BorderRadius.circular(18),
                   child: Container(
                     decoration: BoxDecoration(color: const Color(0xFF1C2C31), borderRadius: BorderRadius.circular(18)),
@@ -213,12 +213,12 @@ class HomeDashboardScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(item['icon'], size: 42, color: item['color']),
+                        Icon(item['icon'] as IconData, size: 42, color: item['color'] as Color),
                         const SizedBox(height: 12),
-                        Text(item['title'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                        if (item['sub'].isNotEmpty) ...[
+                        Text(item['title'] as String, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+                        if ((item['sub'] as String).isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(item['sub'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          Text(item['sub'] as String, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.grey)),
                         ]
                       ],
                     ),
@@ -257,7 +257,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   }
 
   Future<void> _calculatePrayers() async {
-    // إحداثيات افتراضية (القاهرة) وتُحدّث تلقائياً إذا وافق المستخدم على الـ GPS
     double lat = 30.0444;
     double lng = 31.2357;
 
@@ -279,6 +278,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     params.madhab = Madhab.shafi;
     final date = DateComponents.from(DateTime.now());
 
+    if (!mounted) return;
     setState(() {
       _prayerTimes = PrayerTimes(coordinates, date, params);
       _loading = false;
@@ -441,12 +441,14 @@ class _QuranSurahsScreenState extends State<QuranSurahsScreen> {
       final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah'));
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
+        if (!mounted) return;
         setState(() {
           _surahs = data['data'];
           _loading = false;
         });
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() => _loading = false);
     }
   }
@@ -499,6 +501,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   Future<void> _loadAyahs() async {
     final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah/${widget.number}/quran-uthmani'));
     if (res.statusCode == 200) {
+      if (!mounted) return;
       setState(() {
         _ayahs = json.decode(res.body)['data']['ayahs'];
         _loading = false;
@@ -584,7 +587,7 @@ class _QuizScreenState extends State<QuizScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(current['q'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(current['q'] as String, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             ...List.generate(3, (i) => Container(
               width: double.infinity,
@@ -599,7 +602,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ));
                   if (correct && _qIndex < _questions.length - 1) setState(() => _qIndex++);
                 },
-                child: Text(current['options'][i], style: const TextStyle(fontSize: 16, color: Colors.white)),
+                child: Text((current['options'] as List<String>)[i], style: const TextStyle(fontSize: 16, color: Colors.white)),
               ),
             )),
           ],
