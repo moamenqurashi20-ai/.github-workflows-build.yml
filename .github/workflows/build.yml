@@ -1,0 +1,46 @@
+name: Build Tareeq AlJannah APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Initialize Flutter Project & Merge Files
+        run: |
+          mkdir temp_project
+          cd temp_project
+          flutter create --org com.tareeq.aljannah --project-name tareeq_aljannah .
+          cp -f ../pubspec.yaml .
+          cp -rf ../lib/* lib/
+          # إضافة صلاحيات الإنترنت والموقع الجغرافي تلقائياً
+          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>' android/app/src/main/AndroidManifest.xml
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tareeq-aljannah-v1
+          path: temp_project/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 2
