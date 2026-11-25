@@ -28,13 +28,16 @@ jobs:
 
       - name: Initialize Flutter Project & Merge Files
         run: |
-          mkdir temp_project
+          flutter create --org com.tareeq.aljannah --project-name tareeq_aljannah temp_project
+          rm -rf temp_project/test
+          cp -f pubspec.yaml temp_project/pubspec.yaml
+          cp -f lib/main.dart temp_project/lib/main.dart
           cd temp_project
-          flutter create --org com.tareeq.aljannah --project-name tareeq_aljannah .
-          cp -f ../pubspec.yaml .
-          cp -rf ../lib/* lib/
-          # إضافة صلاحيات الإنترنت والموقع الجغرافي تلقائياً
           sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>' android/app/src/main/AndroidManifest.xml
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle
+          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 34/g' android/app/build.gradle
+          sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/g' android/app/build.gradle
+          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' android/app/build.gradle
           flutter pub get
           flutter build apk --release
 
