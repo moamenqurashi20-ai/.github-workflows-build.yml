@@ -1,26 +1,108 @@
-name: tareeq_aljannah
-description: تطبيق طريق الجنة الإسلامي الشامل
-publish_to: 'none'
-version: 1.0.0+1
+name: Build Tareeq AlJannah APK
 
-environment:
-  sdk: '>=3.2.0 <4.0.0'
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-dependencies:
-  flutter:
-    sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  adhan: ^2.0.0+1
-  geolocator: ^10.1.0
-  intl: ^0.19.0
-  google_fonts: ^6.2.1
-  http: ^1.2.2
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-flutter:
-  uses-material-design: true
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Create Flutter Project & Add Packages
+        run: |
+          flutter create --org com.tareeq.aljannah --project-name tareeq_aljannah app_project
+          rm -rf app_project/test
+          cd app_project
+
+          python3 - << 'PYEOF'
+          with open("pubspec.yaml", "r") as f:
+              content = f.read()
+          target = "  flutter:\n    sdk: flutter"
+          replacement = "  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter"
+          content = content.replace(target, replacement, 1)
+          with open("pubspec.yaml", "w") as f:
+              f.write(content)
+          PYEOF
+
+          flutter pub add adhan geolocator intl google_fonts http
+          cp -f "$GITHUB_WORKSPACE/lib/main.dart" lib/main.dart
+
+      - name: Configure AndroidManifest & App Gradle
+        run: |
+          cd "$GITHUB_WORKSPACE/app_project"
+
+          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+              <application
+                  android:label="طريق الجنة"
+                  android:name="${applicationName}"
+                  android:icon="@mipmap/ic_launcher"
+                  android:usesCleartextTraffic="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:theme="@style/LaunchTheme"
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+                      android:hardwareAccelerated="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <meta-data
+                        android:name="io.flutter.embedding.android.NormalTheme"
+                        android:resource="@style/NormalTheme"
+                        />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+                  <meta-data
+                      android:name="flutterEmbedding"
+                      android:value="2" />
+              </application>
+          </manifest>
+          EOF
+
+          python3 - << 'PYEOF'
+          import re
+          path = "android/app/build.gradle.kts"
+          with open(path, "r") as f:
+              text = f.read()
+          text = re.sub(r"minSdk\s*=\s*flutter\.minSdkVersion", "minSdk = 24", text)
+          text = re.sub(r"minSdkVersion\s*=\s*flutter\.minSdkVersion", "minSdkVersion = 24", text)
+          if "multiDexEnabled" not in text:
+              text = text.replace("targetSdk =", "multiDexEnabled = true\n        targetSdk =")
+          with open(path, "w") as f:
+              f.write(text)
+          PYEOF
+
+      - name: Build Release APK
+        run: |
+          cd "$GITHUB_WORKSPACE/app_project"
+          flutter build apk --release
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tareeq-aljannah-v1
+          path: app_project/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 2
