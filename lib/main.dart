@@ -174,13 +174,12 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   }
 }
 
-// 1. الشاشة الرئيسية (Grid مطابقة للصور)
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List> gridItems = [
+    final gridItems = [
       {'title': 'السبحة الإلكترونية', 'sub': '', 'icon': Icons.radio_button_checked, 'color': const Color(0xFF2F80ED), 'page': const TasbihScreen()},
       {'title': 'أسئلة دينية', 'sub': 'اختبر معلوماتك', 'icon': Icons.psychology, 'color': const Color(0xFFEB5757), 'page': const QuizScreen()},
       {'title': 'أوقات الصلاة', 'sub': 'حساب فلكي دقيق', 'icon': Icons.access_time_filled, 'color': const Color(0xFF27AE60), 'page': Scaffold(appBar: AppBar(title: const Text('أوقات الصلاة')), body: const PrayerTimesScreen())},
@@ -237,7 +236,6 @@ class HomeDashboardScreen extends StatelessWidget {
   }
 }
 
-// 2. شاشة مواقيت الصلاة والأذان (بدون أخطاء - حساب فلكي محلي)
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key});
 
@@ -350,7 +348,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   }
 }
 
-// 3. شاشة السبحة الإلكترونية
 class TasbihScreen extends StatefulWidget {
   const TasbihScreen({super.key});
 
@@ -418,7 +415,6 @@ class _TasbihScreenState extends State<TasbihScreen> {
   }
 }
 
-// 4. القرآن الكريم (من API الرسمي المدقق AlQuran Cloud)
 class QuranSurahsScreen extends StatefulWidget {
   const QuranSurahsScreen({super.key});
 
@@ -527,7 +523,6 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   }
 }
 
-// 5. شاشة الأذكار
 class AzkarScreen extends StatelessWidget {
   const AzkarScreen({super.key});
 
@@ -562,7 +557,6 @@ class AzkarScreen extends StatelessWidget {
   }
 }
 
-// 6. شاشة الأسئلة الدينية
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
 
@@ -572,7 +566,7 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   int _qIndex = 0;
-  final List> _questions = [
+  final _questions = [
     {'q': 'ما هي السورة التي تعدل ثلث القرآن؟', 'options': ['الإخلاص', 'الفاتحة', 'الكوثر'], 'ans': 0},
     {'q': 'كم عدد سور القرآن الكريم؟', 'options': ['110', '114', '120'], 'ans': 1},
   ];
@@ -580,6 +574,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     final current = _questions[_qIndex];
+    final options = current['options'] as List<String>;
     return Scaffold(
       appBar: AppBar(title: const Text('أسئلة دينية')),
       body: Padding(
@@ -589,7 +584,7 @@ class _QuizScreenState extends State<QuizScreen> {
           children: [
             Text(current['q'] as String, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
-            ...List.generate(3, (i) => Container(
+            ...List.generate(options.length, (i) => Container(
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 12),
               child: ElevatedButton(
@@ -602,7 +597,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ));
                   if (correct && _qIndex < _questions.length - 1) setState(() => _qIndex++);
                 },
-                child: Text((current['options'] as List<String>)[i], style: const TextStyle(fontSize: 16, color: Colors.white)),
+                child: Text(options[i], style: const TextStyle(fontSize: 16, color: Colors.white)),
               ),
             )),
           ],
