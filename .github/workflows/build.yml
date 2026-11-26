@@ -40,6 +40,18 @@ jobs:
           cd app_project
           flutter pub get
 
+          python3 - << 'PYEOF'
+          import json, os
+          pkg_cfg = ".dart_tool/package_config.json"
+          if os.path.exists(pkg_cfg):
+              with open(pkg_cfg, "r") as f:
+                  data = json.load(f)
+              data["packages"] = [p for p in data.get("packages", []) if p.get("name") != "record_linux"]
+              with open(pkg_cfg, "w") as f:
+                  json.dump(data, f, indent=2)
+          PYEOF
+          sed -i '/record_linux/d' .flutter-plugins-dependencies 2>/dev/null || true
+
       - name: Configure AndroidManifest & Gradle
         run: |
           cd "$GITHUB_WORKSPACE/app_project"
@@ -47,8 +59,12 @@ jobs:
           cat << 'EOF' > android/app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+              <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+              <uses-permission android:name="android.permission.VIBRATE"/>
+              <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
               <application
                   android:label="طريق الجنة"
