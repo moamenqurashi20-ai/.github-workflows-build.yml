@@ -33,9 +33,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "icon.png"
+  image_path: "app_icon_jannah.png"
   adaptive_icon_background: "#0A2E24"
-  adaptive_icon_foreground: "icon.png"
+  adaptive_icon_foreground: "app_icon_jannah.png"
 
 flutter:
   uses-material-design: true
