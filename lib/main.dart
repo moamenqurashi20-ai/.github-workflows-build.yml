@@ -997,11 +997,10 @@ class QuranCompleteTab extends StatefulWidget {
 }
 
 class _QuranCompleteTabState extends State<QuranCompleteTab> {
-  int _subNavIndex = 0; // 0: السور, 1: العلامات
-  String _filterType = 'all'; // all, meccan, medinan
+  int _subNavIndex = 0;
+  String _filterType = 'all';
   String _searchQuery = '';
 
-  // إعدادات القراءة
   double _fontSize = 24.0;
   String _selectedReciter = 'afasy';
   bool _nightMode = true;
@@ -1009,7 +1008,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
   bool _showTashkeel = true;
   List<String> _bookmarks = [];
 
-  final Map<String, Map<String, String>> _reciters = {
+  final Map _reciters = {
     'abdulbasit': {'name': 'عبدالباسط عبدالصمد (مجود)', 'url': 'https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad'},
     'minshawi': {'name': 'المنشاوي (مجود)', 'url': 'https://server11.mp3quran.net/minsh_mjwd'},
     'husary': {'name': 'محمود خليل الحصري', 'url': 'https://server13.mp3quran.net/husr'},
@@ -1019,7 +1018,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
     'shuraim': {'name': 'سعود الشريم', 'url': 'https://server7.mp3quran.net/shur'},
   };
 
-  final List> _surahsData = [
+  final List _surahsData = [
     {'id': 1, 'name': 'الفاتحة', 'verses': 7, 'type': 'meccan', 'juz': 1},
     {'id': 2, 'name': 'البقرة', 'verses': 286, 'type': 'medinan', 'juz': 1},
     {'id': 3, 'name': 'آل عمران', 'verses': 200, 'type': 'medinan', 'juz': 3},
@@ -1158,7 +1157,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
     await prefs.setStringList('quran_bookmarks', _bookmarks);
   }
 
-  void _openSurahReader(Map<String, dynamic> surah, {int? targetAyah}) {
+  void _openSurahReader(Map surah, {int? targetAyah}) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1247,7 +1246,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                       ),
                       items: _reciters.entries
-                          .map((e) => DropdownMenuItem<String>(value: e.key, child: Text(e.value['name']!, style: const TextStyle(fontSize: 12))))
+                          .map((e) => DropdownMenuItem<String>(value: e.key.toString(), child: Text(e.value['name'].toString(), style: const TextStyle(fontSize: 12))))
                           .toList(),
                       onChanged: (v) async {
                         if (v != null) {
@@ -1346,7 +1345,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             children: [
-              // رأس الصفحة بنفس تصميم الصور
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -1363,7 +1361,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
               const SizedBox(height: 16),
 
               if (_subNavIndex == 0) ...[
-                // شريط البحث
                 TextField(
                   onChanged: (v) => setState(() => _searchQuery = v),
                   decoration: InputDecoration(
@@ -1375,8 +1372,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // أزرار الفلترة (الكل / مكية / مدنية)
                 Row(
                   children: [
                     _buildFilterChip("الكل", "all"),
@@ -1387,8 +1382,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
                   ],
                 ),
                 const SizedBox(height: 14),
-
-                // قائمة السور
                 ...filtered.map((s) {
                   final isMeccan = s['type'] == 'meccan';
                   return GestureDetector(
@@ -1418,7 +1411,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(s['name'], style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                                Text(s['name'].toString(), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 3),
                                 Text(
                                   "${s['verses']} آية  •  الجزء ${s['juz']}  •  ${isMeccan ? 'مكية' : 'مدنية'}",
@@ -1438,7 +1431,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
                   );
                 }),
               ] else ...[
-                // قسم العلامات المرجعية (الآيات والسور المحفوظة)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: Row(
@@ -1482,8 +1474,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
             ],
           ),
         ),
-
-        // شريط التبديل بين السور والعلامات بنفس تصميم الصورة
         Container(
           height: 54,
           decoration: const BoxDecoration(
@@ -1575,11 +1565,10 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> {
   }
 }
 
-// صفحة قراءة السورة الكاملة مع الصوت والعلامات والتشكيل
 class SurahFullReaderPage extends StatefulWidget {
-  final Map<String, dynamic> surah;
-  final List> allSurahs;
-  final Map<String, Map<String, String>> reciters;
+  final Map surah;
+  final List allSurahs;
+  final Map reciters;
   final String selectedReciter;
   final double fontSize;
   final bool nightMode;
@@ -1611,14 +1600,14 @@ class SurahFullReaderPage extends StatefulWidget {
 }
 
 class _SurahFullReaderPageState extends State<SurahFullReaderPage> {
-  late Map<String, dynamic> _currentSurah;
+  late Map _currentSurah;
   late String _reciter;
   late double _fontSize;
   late bool _showAyahNum;
   late bool _showTashkeel;
   late List<String> _bookmarks;
 
-  List<dynamic> _ayahs = [];
+  List _ayahs = [];
   bool _loading = true;
 
   final AudioPlayer _player = AudioPlayer();
@@ -1634,7 +1623,7 @@ class _SurahFullReaderPageState extends State<SurahFullReaderPage> {
     _fontSize = widget.fontSize;
     _showAyahNum = widget.showAyahNumbers;
     _showTashkeel = widget.showTashkeel;
-    _bookmarks = List.from(widget.bookmarks);
+    _bookmarks = List<String>.from(widget.bookmarks);
 
     _fetchAyahs();
     _player.onDurationChanged.listen((d) {
@@ -1676,7 +1665,7 @@ class _SurahFullReaderPageState extends State<SurahFullReaderPage> {
       setState(() => _isPlaying = false);
     } else {
       final padded = _currentSurah['id'].toString().padLeft(3, '0');
-      final url = "${widget.reciters[_reciter]!['url']}/$padded.mp3";
+      final url = "${widget.reciters[_reciter]['url']}/$padded.mp3";
       await _player.play(UrlSource(url));
       setState(() => _isPlaying = true);
     }
@@ -1792,8 +1781,6 @@ class _SurahFullReaderPageState extends State<SurahFullReaderPage> {
                     ],
                   ),
           ),
-
-          // شريط التحكم الصوتي السفلي
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
             decoration: const BoxDecoration(
@@ -1804,7 +1791,7 @@ class _SurahFullReaderPageState extends State<SurahFullReaderPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "القارئ: ${widget.reciters[_reciter]!['name']} | اضغط على أي آية لحفظ علامة",
+                  "القارئ: ${widget.reciters[_reciter]['name']} | اضغط على أي آية لحفظ علامة",
                   style: const TextStyle(fontSize: 11, color: Color(0xFF8A9EA6)),
                 ),
                 SliderTheme(
@@ -1873,7 +1860,6 @@ class _SurahFullReaderPageState extends State<SurahFullReaderPage> {
   }
 }
 
-// شاشة الأسئلة الدينية التفاعلية
 class ReligiousQuizTab extends StatefulWidget {
   const ReligiousQuizTab({super.key});
 
@@ -1886,7 +1872,7 @@ class _ReligiousQuizTabState extends State<ReligiousQuizTab> {
   int _score = 0;
   int? _selectedOption;
 
-  final List> _questions = [
+  final List _questions = [
     {
       'q': 'ما هي السورة التي تُسمى قلب القرآن؟',
       'options': ['سورة البقرة', 'سورة يس', 'سورة الملك', 'سورة الرحمن'],
@@ -1938,7 +1924,8 @@ class _ReligiousQuizTabState extends State<ReligiousQuizTab> {
   @override
   Widget build(BuildContext context) {
     final current = _questions[_qIndex];
-    final correctIdx = current['answer'] as int;
+    final int correctIdx = current['answer'];
+    final List options = current['options'];
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -1965,15 +1952,14 @@ class _ReligiousQuizTabState extends State<ReligiousQuizTab> {
               border: Border.all(color: Colors.white12),
             ),
             child: Text(
-              current['q'],
+              current['q'].toString(),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, height: 1.5),
             ),
           ),
           const SizedBox(height: 18),
-          ...(current['options'] as List<String>).asMap().entries.map((entry) {
-            final idx = entry.key;
-            final opt = entry.value;
+          ...List.generate(options.length, (idx) {
+            final opt = options[idx].toString();
             Color cardColor = const Color(0xFF162A33);
             Color borderColor = Colors.white10;
 
@@ -2019,7 +2005,6 @@ class _ReligiousQuizTabState extends State<ReligiousQuizTab> {
   }
 }
 
-// بوصلة القبلة
 class QiblaCompassTab extends StatefulWidget {
   const QiblaCompassTab({super.key});
 
@@ -2091,7 +2076,6 @@ class _QiblaCompassTabState extends State<QiblaCompassTab> {
   }
 }
 
-// السبحة والأذكار
 class AzkarAndTasbihTab extends StatefulWidget {
   const AzkarAndTasbihTab({super.key});
 
@@ -2103,7 +2087,7 @@ class _AzkarAndTasbihTabState extends State<AzkarAndTasbihTab> {
   int _count = 0;
   int _total = 0;
 
-  final List> _azkar = [
+  final List _azkar = [
     {"title": "أذكار الصباح", "text": "أصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير."},
     {"title": "أذكار المساء", "text": "أمسينا وأمسى الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير."},
     {"title": "سيد الاستغفار", "text": "اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت."},
@@ -2167,9 +2151,9 @@ class _AzkarAndTasbihTabState extends State<AzkarAndTasbihTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(z["title"]!, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1FC0A0))),
+                  Text(z["title"].toString(), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1FC0A0))),
                   const SizedBox(height: 6),
-                  Text(z["text"]!, style: GoogleFonts.amiri(fontSize: 19, height: 1.7)),
+                  Text(z["text"].toString(), style: GoogleFonts.amiri(fontSize: 19, height: 1.7)),
                 ],
               ),
             )),
