@@ -1,7 +1,7 @@
 name: tareeq_aljannah
 description: تطبيق طريق الجنة الإسلامي الشامل.
 publish_to: 'none'
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
   sdk: '^3.6.0'
@@ -23,10 +23,19 @@ dependencies:
   shared_preferences: ^2.3.3
   flutter_compass: ^0.8.0
   permission_handler: ^11.3.1
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "icon.png"
+  adaptive_icon_background: "#0A2E24"
+  adaptive_icon_foreground: "icon.png"
 
 flutter:
   uses-material-design: true
