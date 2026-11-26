@@ -37,13 +37,13 @@ jobs:
           rm -rf app_project/test
           cp -f "$GITHUB_WORKSPACE/pubspec.yaml" app_project/pubspec.yaml
           cp -rf "$GITHUB_WORKSPACE/lib/"* app_project/lib/
-          if [ -f "$GITHUB_WORKSPACE/icon.png" ]; then
-            cp -f "$GITHUB_WORKSPACE/icon.png" app_project/icon.png
+          if [ -f "$GITHUB_WORKSPACE/app_icon_jannah.png" ]; then
+            cp -f "$GITHUB_WORKSPACE/app_icon_jannah.png" app_project/app_icon_jannah.png
           fi
           cd app_project
           flutter pub get
 
-          if [ -f "icon.png" ]; then
+          if [ -f "app_icon_jannah.png" ]; then
             dart run flutter_launcher_icons
           fi
 
@@ -62,6 +62,19 @@ jobs:
       - name: Configure AndroidManifest & Gradle
         run: |
           cd "$GITHUB_WORKSPACE/app_project"
+
+          if [ -f "$GITHUB_WORKSPACE/splash_jannah.png" ]; then
+            mkdir -p android/app/src/main/res/drawable
+            cp -f "$GITHUB_WORKSPACE/splash_jannah.png" android/app/src/main/res/drawable/splash_bg.png
+            cat << 'EOF' > android/app/src/main/res/drawable/launch_background.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item>
+                  <bitmap android:gravity="fill" android:src="@drawable/splash_bg" />
+              </item>
+          </layer-list>
+          EOF
+          fi
 
           cat << 'EOF' > android/app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -129,6 +142,7 @@ jobs:
               ndkVersion "27.0.12077973"
 
               compileOptions {
+                  coreLibraryDesugaringEnabled true
                   sourceCompatibility JavaVersion.VERSION_17
                   targetCompatibility JavaVersion.VERSION_17
               }
@@ -157,6 +171,10 @@ jobs:
                       shrinkResources false
                   }
               }
+          }
+
+          dependencies {
+              coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
           }
 
           flutter {
