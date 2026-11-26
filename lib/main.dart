@@ -69,7 +69,6 @@ class MainDashboardScreen extends StatefulWidget {
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _selectedIndex = 0;
 
-  // الموقع والمواقيت (القاهرة / قنا كافتراضي لحين جلب GPS)
   double _lat = 26.1551;
   double _lng = 32.7160;
   String _cityName = "جاري تحديد الموقع...";
@@ -78,7 +77,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   String _nextPrayerName = "";
   Duration _remainingTime = Duration.zero;
 
-  // الصوت والأذان ومنبه الفجر بصوت المستخدم
   final AudioPlayer _adhanPlayer = AudioPlayer();
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isAdhanPlaying = false;
@@ -183,7 +181,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     final now = DateTime.now();
     final pt = _prayerTimes!;
 
-    // الصلوات الخمس والشروق فقط (بدون صلاة العيد)
     final list = [
       MapEntry("الفجر", pt.fajr),
       MapEntry("الشروق", pt.sunrise),
@@ -282,7 +279,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
 
-  // تسجيل صوت المستخدم لمنبه الفجر
   Future<void> _toggleRecordFajrVoice() async {
     if (_isRecordingFajr) {
       final path = await _audioRecorder.stop();
@@ -308,7 +304,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     }
   }
 
-  // اختيار ملف صوتي من الهاتف لمنبه الفجر
   Future<void> _pickAudioFileForFajr() async {
     final res = await FilePicker.platform.pickFiles(type: FileType.audio);
     if (res != null && res.files.single.path != null) {
@@ -387,7 +382,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // الهيدر
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -412,8 +406,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // بطاقة العد التنازلي للصلاة القادمة
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -449,8 +441,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // جدول المواقيت (الصلوات الخمس والشروق فقط)
           ...prayersList.map((p) {
             final bool isNext = p["isNext"] as bool;
             return Container(
@@ -482,10 +472,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               ),
             );
           }),
-
           const SizedBox(height: 16),
-
-          // قسم منبه صلاة الفجر بصوت المستخدم وإعدادات المؤذن
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -601,9 +588,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 }
 
-// ==========================================
-// شاشة بوصلة القبلة التفاعلية الدقيقة
-// ==========================================
 class QiblaCompassTab extends StatelessWidget {
   final double lat;
   final double lng;
@@ -699,9 +683,6 @@ class QiblaCompassTab extends StatelessWidget {
     );
   }
 }
-// ==========================================
-// شاشة المصحف الشريف كاملاً (صور 604 صفحة + صوت + نص)
-// ==========================================
 class QuranCompleteTab extends StatefulWidget {
   const QuranCompleteTab({super.key});
 
@@ -713,12 +694,10 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
   late TabController _tabController;
   final AudioPlayer _quranPlayer = AudioPlayer();
 
-  // قائمة الـ 114 سورة
-  List<dynamic> _surahs = [];
-  List<dynamic> _filteredSurahs = [];
+  List _surahs = [];
+  List _filteredSurahs = [];
   bool _isLoadingSurahs = true;
 
-  // إعدادات القارئ والصوت
   String _selectedReciter = "ar.alafasy";
   int? _playingSurahNumber;
   String _playingSurahName = "";
@@ -726,11 +705,10 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
 
-  // إعدادات المصحف المصور (604 صفحة)
   int _currentMushafPage = 1;
   final PageController _pageController = PageController();
 
-  final Map<String, String> _reciters = {
+  final Map _reciters = {
     "ar.alafasy": "مشاري راشد العفاسي",
     "ar.abdulbasitmurattal": "عبد الباسط عبد الصمد",
     "ar.husary": "محمود خليل الحصري",
@@ -907,7 +885,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
             ],
           ),
         ),
-        // مشغل الصوت السفلي المصغر عند تشغيل أي سورة
         if (_playingSurahNumber != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -929,7 +906,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(_playingSurahName, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4AF37))),
-                          Text(_reciters[_selectedReciter] ?? "", style: const TextStyle(fontSize: 11, color: Colors.white70)),
+                          Text(_reciters[_selectedReciter]?.toString() ?? "", style: const TextStyle(fontSize: 11, color: Colors.white70)),
                         ],
                       ),
                     ),
@@ -962,7 +939,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
     );
   }
 
-  // واجهة المصحف المصور (604 صفحة عالية الدقة)
   Widget _buildMushafImagesView() {
     return Column(
       children: [
@@ -973,14 +949,10 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("صفحة $_currentMushafPage من 604", style: const TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold)),
-              Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: _showJumpToPageDialog,
-                    icon: const Icon(Icons.find_in_page_rounded, size: 18, color: Color(0xFF10B981)),
-                    label: const Text("انتقال لصفحة", style: TextStyle(color: Color(0xFF10B981), fontSize: 12)),
-                  ),
-                ],
+              TextButton.icon(
+                onPressed: _showJumpToPageDialog,
+                icon: const Icon(Icons.find_in_page_rounded, size: 18, color: Color(0xFF10B981)),
+                label: const Text("انتقال لصفحة", style: TextStyle(color: Color(0xFF10B981), fontSize: 12)),
               ),
             ],
           ),
@@ -988,7 +960,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
         Expanded(
           child: PageView.builder(
             controller: _pageController,
-            reverse: false, // اتجاه القراءة العربي من اليمين لليسار تلقائي مع RTL
+            reverse: false,
             itemCount: 604,
             onPageChanged: (index) {
               setState(() => _currentMushafPage = index + 1);
@@ -999,7 +971,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
               final imageUrl = "https://android.quran.com/data/width_1024/page$pageNum.png";
 
               return Container(
-                color: const Color(0xFFFDF8E8), // خلفية ورقية مريحة للعين
+                color: const Color(0xFFFDF8E8),
                 child: InteractiveViewer(
                   minScale: 1.0,
                   maxScale: 3.0,
@@ -1030,7 +1002,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
     );
   }
 
-  // واجهة قائمة السور الـ 114 بالصوت والنص
   Widget _buildSurahsListView() {
     return Column(
       children: [
@@ -1048,7 +1019,7 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
                   fillColor: const Color(0xFF12211D),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                 ),
-                items: _reciters.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+                items: _reciters.entries.map((e) => DropdownMenuItem<String>(value: e.key.toString(), child: Text(e.value.toString()))).toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedReciter = val);
                 },
@@ -1115,7 +1086,6 @@ class _QuranCompleteTabState extends State<QuranCompleteTab> with SingleTickerPr
   }
 }
 
-// عارض نص السورة بالرسم العثماني
 class SurahReaderView extends StatefulWidget {
   final int surahNumber;
   final String surahName;
@@ -1135,7 +1105,7 @@ class SurahReaderView extends StatefulWidget {
 }
 
 class _SurahReaderViewState extends State<SurahReaderView> {
-  List<dynamic> _ayahs = [];
+  List _ayahs = [];
   bool _loading = true;
 
   @override
@@ -1199,15 +1169,12 @@ class _SurahReaderViewState extends State<SurahReaderView> {
                       textAlign: TextAlign.justify,
                       text: TextSpan(
                         style: GoogleFonts.amiri(fontSize: 24, height: 2.1, color: Colors.white),
-                        children: _ayahs.map((a) {
+                        children: _ayahs.map<TextSpan>((a) {
                           String txt = a['text'].toString();
                           if (widget.surahNumber != 1 && a['numberInSurah'] == 1) {
                             txt = txt.replaceFirst("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", "").trim();
                           }
-                          return TextSpan(
-                            text: "$txt ﴿${a['numberInSurah']}﴾ ",
-                            children: const [],
-                          );
+                          return TextSpan(text: "$txt ﴿${a['numberInSurah']}﴾ ");
                         }).toList(),
                       ),
                     ),
@@ -1219,9 +1186,6 @@ class _SurahReaderViewState extends State<SurahReaderView> {
   }
 }
 
-// ==========================================
-// شاشة الأذكار والسبحة الإلكترونية
-// ==========================================
 class AzkarAndTasbihTab extends StatefulWidget {
   const AzkarAndTasbihTab({super.key});
 
@@ -1234,7 +1198,7 @@ class _AzkarAndTasbihTabState extends State<AzkarAndTasbihTab> {
   int _totalTasbih = 0;
   String _selectedZikr = "سبحان الله وبحمده";
 
-  final List<String> _tasbihPhrases = [
+  final List _tasbihPhrases = [
     "سبحان الله وبحمده",
     "أستغفر الله العظيم وأتوب إليه",
     "اللهم صلِّ وسلم على نبينا محمد",
@@ -1242,7 +1206,7 @@ class _AzkarAndTasbihTabState extends State<AzkarAndTasbihTab> {
     "لا حول ولا قوة إلا بالله",
   ];
 
-  final List> _dailyAzkar = [
+  final List _dailyAzkar = [
     {"title": "أذكار الصباح", "text": "أصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير."},
     {"title": "أذكار المساء", "text": "أمسينا وأمسى الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير."},
     {"title": "سيد الاستغفار", "text": "اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت."},
@@ -1296,7 +1260,7 @@ class _AzkarAndTasbihTabState extends State<AzkarAndTasbihTab> {
                     fillColor: const Color(0xFF0A1210),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
-                  items: _tasbihPhrases.map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 13)))).toList(),
+                  items: _tasbihPhrases.map((p) => DropdownMenuItem<String>(value: p.toString(), child: Text(p.toString(), style: const TextStyle(fontSize: 13)))).toList(),
                   onChanged: (v) {
                     if (v != null) setState(() => _selectedZikr = v);
                   },
@@ -1349,9 +1313,9 @@ class _AzkarAndTasbihTabState extends State<AzkarAndTasbihTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(z["title"]!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                    Text(z["title"]!.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
                     const SizedBox(height: 6),
-                    Text(z["text"]!, style: GoogleFonts.amiri(fontSize: 19, height: 1.7, color: Colors.white)),
+                    Text(z["text"]!.toString(), style: GoogleFonts.amiri(fontSize: 19, height: 1.7, color: Colors.white)),
                   ],
                 ),
               )),
