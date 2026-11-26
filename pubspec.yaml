@@ -25,7 +25,7 @@ dependencies:
   permission_handler: ^11.3.1
 
 dependency_overrides:
-  record_linux: ^0.7.2
+  record_platform_interface: 1.5.0
 
 dev_dependencies:
   flutter_test:
